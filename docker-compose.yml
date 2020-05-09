@@ -1,0 +1,11 @@
+version: '3'
+services:
+  kurento:
+    image: kurento/kurento-media-server
+    environment:
+      - KMS_STUN_IP=stun.l.google.com
+      - KMS_STUN_PORT=19302
+    ports:
+      - 8888:8888
+    volumes:
+      - ./recs:/recs

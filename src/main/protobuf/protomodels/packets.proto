@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+import "google/protobuf/any.proto";
+import "google/protobuf/descriptor.proto";
+
+message PacketWrapper {
+    // Set of FileDescriptorProtos which describe the type and its dependencies.
+    google.protobuf.FileDescriptorSet descriptor_set = 1;
+    // The message and its type, encoded as an Any message.
+    google.protobuf.Any message = 2;
+}
+
+message Packet {
+    sint32 user_id = 1;
+    bool is_auth = 2;
+    string data = 3;
+}
+
+message Register {
+    string name = 1;
+    bool only_auth = 2;
+}
+
+message Result {
+    enum Status {
+        SUCCESS = 0;
+        FAIL = 1;
+    }
+    Status status = 1;
+    string message = 2;
+}
+
+message InternalPacket {
+    string sender = 1;
+    string message = 2;
+}

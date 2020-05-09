@@ -1,0 +1,23 @@
+variables:
+  DOCKER_DRIVER: overlay
+
+docker-build:
+  image: maplegend/docker-sbt:latest
+  stage: build
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+    SBT_OPTS: "-XX:+CMSClassUnloadingEnabled -XX:MaxPermSize=1G -Xmx1G"
+  services:
+    - docker:19.03.8-dind
+  before_script:
+    - docker login $DOCKER_REGISTRY -u nologin -p $REGISTRY_KEY
+  script:
+    - sbt assembly
+    - docker build -t "$DOCKER_REGISTRY$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG" --no-cache .
+    - docker push "$DOCKER_REGISTRY$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG"
+  tags:
+    - main
+  only:
+    - "master"
