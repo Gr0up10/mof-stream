@@ -38,6 +38,7 @@ class KurentoHandler extends Actor with ActorLogging {
   private val dispatcher = new DispatcherOneToMany.Builder(pipeline).build
   private var viewers = mutable.HashMap[Int, UserSession]()
   private var presenters = mutable.HashMap[Int, UserSession]()
+  private var currentStreamer = -1
 
   override def receive: Receive = {
     case Connected() =>
@@ -66,6 +67,7 @@ class KurentoHandler extends Actor with ActorLogging {
         val recorder = new RecorderEndpoint.Builder(pipeline, s"file:///recs/${System.currentTimeMillis()}rec$id.webm").withMediaProfile(MediaProfileSpecType.WEBM).build()
         user.endpoint.connect(recorder)
         recorder.record()
+        if(currentStreamer == -1) dispatcher.setSource(user.hubPort)
       }
       log.info("User {} is connected, presenter: {}", id, presenter)
 

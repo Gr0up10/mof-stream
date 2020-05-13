@@ -52,10 +52,6 @@ class StreamHandler(kurentoHandler: ActorRef) extends Actor with ActorLogging {
                     new org.kurento.client.IceCandidate(candidate, sdpMid, sdpMLineIndex), presenter)
 
                 case other => log.error("Unsupported json model {}", other)
-
-                //if(currentStreamer == -1) {
-                //  kurentoHandler ! KurentoHandler.Present(offer)
-                //} else log.warning("Warning user {} trying to start unauthorized stream", p.userId)
               }
 
             case Left(err) =>
