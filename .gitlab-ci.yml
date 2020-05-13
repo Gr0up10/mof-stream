@@ -8,7 +8,7 @@ docker-build:
     DOCKER_DRIVER: overlay2
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
-    SBT_OPTS: "-XX:+CMSClassUnloadingEnabled -XX:MaxPermSize=1G -Xmx1G"
+    SBT_OPTS: "-XX:+CMSClassUnloadingEnabled -XX:MaxPermSize=1G -Xmx1G -Dkms.url=ws://kurento:8888/kurento"
   services:
     - docker:19.03.8-dind
   before_script:
