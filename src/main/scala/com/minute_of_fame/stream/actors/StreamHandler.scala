@@ -68,12 +68,6 @@ class StreamHandler(kurentoHandler: ActorRef) extends Actor with ActorLogging {
             command.data match {
               case SetRtcStream(id) =>
                 kurentoHandler ! KurentoHandler.SetPresenter(id)
-                //kurentoHandler ! KurentoHandler.StopStream()
-                //offers.get(id) match {
-                //  case Some(offer) =>
-                //    kurentoHandler ! KurentoHandler.Present(id, offer)
-                //  case None => if(id != -1) log.error("Cannot find offer of id: {}", id)
-                //}
 
               case other => log.error("Unsupported command {} from {}", other, p.sender)
             }
