@@ -26,6 +26,11 @@ object KurentoHandler {
 
     hubPort.connect(endpoint)
     endpoint.connect(hubPort)
+
+    def release(): Unit = {
+      endpoint.release()
+      hubPort.release()
+    }
   }
 }
 
@@ -93,9 +98,10 @@ class KurentoHandler extends Actor with ActorLogging {
     case CloseConnection(id, presenter) =>
       (if(presenter) presenters.get(id) else viewers.get(id)) match {
         case Some(user) =>
-          user.endpoint.release()
-          viewers -= id
+          user.release()
         case None => log.warning("Cannot remove non existing user")
       }
+      if(presenter) presenters -= id
+      else viewers -= id
   }
 }
