@@ -70,7 +70,10 @@ class KurentoHandler extends Actor with ActorLogging {
                           .build()
         user.endpoint.connect(recorder)
         recorder.record()
-        if(currentStreamer == -1) dispatcher.setSource(user.hubPort)
+        if(currentStreamer == -1) {
+          dispatcher.setSource(user.hubPort)
+          currentStreamer = id
+        }
       }
       log.info("User {} is connected, presenter: {}", id, presenter)
 
