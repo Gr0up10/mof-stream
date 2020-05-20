@@ -71,7 +71,7 @@ class KurentoHandler extends Actor with ActorLogging {
         presenters += id -> user
         val recorder = new RecorderEndpoint
                           .Builder(pipeline, s"file:///recs/${System.currentTimeMillis()}rec$id.webm")
-                          .withMediaProfile(MediaProfileSpecType.WEBM)
+                          //.withMediaProfile(MediaProfileSpecType.WEBM)
                           .build()
         user.endpoint.connect(recorder)
         recorder.record()
