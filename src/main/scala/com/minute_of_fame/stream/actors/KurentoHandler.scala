@@ -109,5 +109,10 @@ class KurentoHandler extends Actor with ActorLogging {
       }
       if(presenter) presenters -= id
       else viewers -= id
+
+      if(presenter && id == currentStreamer) {
+        dispatcher.setSource(playerHub)
+        currentStreamer = -1
+      }
   }
 }
