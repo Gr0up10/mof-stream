@@ -2,7 +2,7 @@ package com.minute_of_fame.stream.actors
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import com.minute_of_fame.stream.models.JsonPackets
-import org.kurento.client.{DispatcherOneToMany, HubPort, IceCandidate, KurentoClient, MediaPipeline, MediaProfileSpecType, RecorderEndpoint, WebRtcEndpoint}
+import org.kurento.client.{DispatcherOneToMany, HubPort, IceCandidate, KurentoClient, MediaPipeline, MediaProfileSpecType, PlayerEndpoint, RecorderEndpoint, WebRtcEndpoint}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -44,6 +44,12 @@ class KurentoHandler extends Actor with ActorLogging {
   private var viewers = mutable.HashMap[Int, UserSession]()
   private var presenters = mutable.HashMap[Int, UserSession]()
   private var currentStreamer = -1
+
+  private val player = new PlayerEndpoint.Builder(pipeline, "file:///tst.mp4").build
+  private val playerHub = new HubPort.Builder(dispatcher).build
+  playerHub.connect(player)
+  player.connect(playerHub)
+  dispatcher.setSource(playerHub)
 
   override def receive: Receive = {
     case Connected() =>
