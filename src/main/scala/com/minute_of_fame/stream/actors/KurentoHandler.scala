@@ -40,16 +40,19 @@ class KurentoHandler extends Actor with ActorLogging {
   private var session: ActorRef = _
   private val kurento = KurentoClient.create()
   private val pipeline: MediaPipeline = kurento.createMediaPipeline
-  private val dispatcher = new DispatcherOneToMany.Builder(pipeline).build
+  private val dispatcher = new DispatcherOneToMany.Builder(pipeline).build()
   private var viewers = mutable.HashMap[Int, UserSession]()
   private var presenters = mutable.HashMap[Int, UserSession]()
   private var currentStreamer = -1
 
-  private val player = new PlayerEndpoint.Builder(pipeline, "file:///tst.mp4").build
-  private val playerHub = new HubPort.Builder(dispatcher).build
+  private val player = new PlayerEndpoint.Builder(pipeline, "file:///tst.mp4").build()
+  private val playerHub = new HubPort.Builder(dispatcher).build()
   playerHub.connect(player)
   player.connect(playerHub)
   dispatcher.setSource(playerHub)
+  player.play()
+  player.addEndOfStreamListener(_ => player.play());
+  println("Playing tst video")
 
   override def receive: Receive = {
     case Connected() =>
@@ -71,13 +74,15 @@ class KurentoHandler extends Actor with ActorLogging {
       val answer = user.endpoint.processOffer(offer)
       session ! SdpAnswer(id, answer, presenter)
       user.endpoint.gatherCandidates()
-      if(!presenter)
+      if(!presenter) {
         viewers += id -> user
-      else {
+        user.endpoint.setMinOutputBitrate(1500)
+      } else {
         presenters += id -> user
+        user.endpoint.setMinVideoRecvBandwidth(1500)
         val recorder = new RecorderEndpoint
                           .Builder(pipeline, s"file:///recs/${System.currentTimeMillis()}rec$id.webm")
-                          //.withMediaProfile(MediaProfileSpecType.WEBM)
+                          .withMediaProfile(MediaProfileSpecType.WEBM)
                           .build()
         user.endpoint.connect(recorder)
         recorder.record()
