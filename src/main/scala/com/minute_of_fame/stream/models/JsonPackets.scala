@@ -13,7 +13,7 @@ object JsonPackets {
   @ConfiguredJsonCodec case class CommandPacket(command: String, data: Command)
 
   @ConfiguredJsonCodec sealed trait Command
-  case class Connect(offer: String, presenter: Boolean) extends Command
+  case class Connect(offer: String, presenter: Boolean, fake: Boolean) extends Command
   case class IceCandidate(candidate: String, sdpMid: String, sdpMLineIndex: Int, presenter: Boolean) extends Command
   //Queue command
   case class SetRtcStream(id: Int) extends Command

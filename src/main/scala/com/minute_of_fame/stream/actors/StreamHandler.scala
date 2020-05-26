@@ -43,9 +43,9 @@ class StreamHandler(kurentoHandler: ActorRef) extends Actor with ActorLogging {
           decode[CommandPacket](json) match {
             case Right(cmd) =>
               cmd.data match {
-                case JsonPackets.Connect(offer, presenter) =>
+                case JsonPackets.Connect(offer, presenter, fake) =>
                   //log.info("Receive new offer {}", offer)
-                  kurentoHandler ! KurentoHandler.CreateUser(p.userId, offer, presenter)
+                  kurentoHandler ! KurentoHandler.CreateUser(p.userId, offer, presenter, fake)
 
                 case JsonPackets.IceCandidate(candidate, sdpMid, sdpMLineIndex, presenter) =>
                   kurentoHandler ! KurentoHandler.InIceCandidate(p.userId,

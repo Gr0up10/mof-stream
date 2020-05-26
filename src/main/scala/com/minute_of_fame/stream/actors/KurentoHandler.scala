@@ -12,7 +12,7 @@ object KurentoHandler {
 
   case class Connected()
   case class SetPresenter(id: Int)
-  case class CreateUser(id: Int, offer: String, presenter: Boolean)
+  case class CreateUser(id: Int, offer: String, presenter: Boolean, fake: Boolean)
   case class StopStream()
   case class CloseConnection(id: Int, presenter: Boolean)
   case class InIceCandidate(id: Int, iceCandidate: IceCandidate, presenter: Boolean)
@@ -51,7 +51,7 @@ class KurentoHandler extends Actor with ActorLogging {
   player.connect(playerHub)
   dispatcher.setSource(playerHub)
   player.play()
-  player.addEndOfStreamListener(_ => player.play());
+  player.addEndOfStreamListener(_ => if(currentStreamer == -1) player.play())
   println("Playing tst video")
 
   override def receive: Receive = {
@@ -59,6 +59,7 @@ class KurentoHandler extends Actor with ActorLogging {
       session = sender()
 
     case SetPresenter(id) =>
+      log.info("Setting presenter {}", id)
       presenters.get(id) match {
         case Some(user) =>
           log.info("Set dispatcher source {}", id)
@@ -67,33 +68,43 @@ class KurentoHandler extends Actor with ActorLogging {
         case None => log.error("Cannot find user with id {}", id)
       }
 
-    case CreateUser(id, offer, presenter) =>
+    case CreateUser(id, offer, presenter, fake) =>
       val user = UserSession(pipeline, dispatcher)
       user.endpoint.addIceCandidateFoundListener(event => session ! IceCandidateAnswer(id, event.getCandidate, presenter))
 
       val answer = user.endpoint.processOffer(offer)
       session ! SdpAnswer(id, answer, presenter)
       user.endpoint.gatherCandidates()
-      if(!presenter) {
+      if (!presenter) {
         viewers += id -> user
         user.endpoint.setMinOutputBitrate(1500)
       } else {
-        presenters += id -> user
-        user.endpoint.setMinVideoRecvBandwidth(1500)
-        val recorder = new RecorderEndpoint
-                          .Builder(pipeline, s"file:///recs/${System.currentTimeMillis()}rec$id.webm")
-                          .withMediaProfile(MediaProfileSpecType.WEBM)
-                          .build()
-        user.endpoint.connect(recorder)
-        recorder.record()
-        if(currentStreamer == -1) {
-          dispatcher.setSource(user.hubPort)
-          currentStreamer = id
+        presenters.get(id) match {
+          case Some(v) =>
+            v.release()
+            presenters -= id
+          case None =>
         }
+        presenters += id -> user
+        if(!fake) {
+          user.endpoint.setMinVideoRecvBandwidth(1500)
+          val recorder = new RecorderEndpoint
+          .Builder(pipeline, s"file:///recs/${System.currentTimeMillis()}rec$id.webm")
+            .withMediaProfile(MediaProfileSpecType.WEBM)
+            .build()
+          user.endpoint.connect(recorder)
+          recorder.record()
+          if (currentStreamer == -1) {
+            dispatcher.setSource(user.hubPort)
+            currentStreamer = id
+          }
+        }
+
       }
-      log.info("User {} is connected, presenter: {}", id, presenter)
+      log.info("User {} is connected, presenter: {}, fake {}", id, presenter, fake)
 
     case InIceCandidate(id, candidate, presenter) =>
+
       (if(presenter) presenters.get(id) else viewers.get(id)) match {
         case Some(user) => user.endpoint.addIceCandidate(candidate)
         case None => log.error("Cannot find user with id {}", id)
@@ -117,6 +128,7 @@ class KurentoHandler extends Actor with ActorLogging {
 
       if(presenter && id == currentStreamer) {
         dispatcher.setSource(playerHub)
+        player.play()
         currentStreamer = -1
       }
   }
